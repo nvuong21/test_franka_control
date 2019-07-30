@@ -1,0 +1,74 @@
+# Joint state controller
+joint_state_controller:
+  publish_rate: 125
+  type: joint_state_controller/JointStateController
+
+# # Gripper controller
+# gripper_controller:
+#   type: position_controllers/GripperActionController
+#   joint: robotiq_85_left_knuckle_joint
+#   action_monitor_rate: 20
+#   goal_tolerance: 0.002
+#   max_effort: 100
+#   stall_velocity_threshold: 0.001
+#   stall_timeout: 1.0
+
+# Trajectory controller
+trajectory_controller:
+  type: position_controllers/JointTrajectoryController
+  joints:
+    - panda_joint1
+    - panda_joint2
+    - panda_joint3
+    - panda_joint4
+    - panda_joint5
+    - panda_joint6
+    - panda_joint7
+  constraints:
+    # Default is 0
+    goal_time: 0.1
+    # Default is 0.01
+    stopped_velocity_tolerance: 0.01
+    panda_joint1:
+      trajectory: 0
+      goal: 0.01
+    panda_joint2:
+      trajectory: 0
+      goal: 0.01
+    panda_joint3:
+      trajectory: 0
+      goal: 0.01
+    panda_joint4:
+      trajectory: 0
+      goal: 0.01
+    panda_joint5:
+      trajectory: 0
+      goal: 0.01
+    panda_joint6:
+      trajectory: 0
+      goal: 0.01
+    panda_joint7:
+      trajectory: 0
+      goal: 0.01
+#Position controller
+panda_joint1:
+  type: position_controllers/JointPositionController
+  joint: panda_joint1
+panda_joint2:
+  type: position_controllers/JointPositionController
+  joint: panda_joint2
+panda_joint3:
+  type: position_controllers/JointPositionController
+  joint: panda_joint3
+panda_joint4:
+  type: position_controllers/JointPositionController
+  joint: panda_joint4
+panda_joint5:
+  type: position_controllers/JointPositionController
+  joint: panda_joint5
+panda_joint6:
+  type: position_controllers/JointPositionController
+  joint: panda_joint6
+panda_joint7:
+  type: position_controllers/JointPositionController
+  joint: panda_joint7

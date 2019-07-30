@@ -1,0 +1,19 @@
+<?xml version="1.0" ?>
+<launch>
+  <!-- <arg name="debug"     default="false" />
+  <arg if=    "$(arg debug)"  name="DEBUG" value="screen"/>
+  <arg unless="$(arg debug)"  name="DEBUG" value="log"/> -->
+
+  <!-- <arg name="robot_ip" />
+  <arg name="load_gripper" default="false" />
+  <include file="$(find franka_control)/launch/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+    <arg name="load_gripper" value="$(arg load_gripper)" />
+  </include> -->
+
+  <rosparam command="load" file="$(find test1)/config/test_controller.yaml" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+    args="panda_joint1 panda_joint2 panda_joint3 panda_joint4 panda_joint5 panda_joint6 panda_joint7"/>
+
+
+</launch>

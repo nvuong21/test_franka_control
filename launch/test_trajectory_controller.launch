@@ -1,0 +1,33 @@
+<?xml version="1.0" ?>
+<launch>
+  <!-- <arg name="debug"     default="false" />
+  <arg if=    "$(arg debug)"  name="DEBUG" value="screen"/>
+  <arg unless="$(arg debug)"  name="DEBUG" value="log"/> -->
+  <arg name="planner" default="ompl" />
+  <arg name="robot_ip" />
+  <arg name="load_gripper" default="true" />
+  <include file="$(find franka_control)/launch/franka_control.launch" >
+    <arg name="robot_ip" value="$(arg robot_ip)" />
+    <arg name="load_gripper" value="$(arg load_gripper)" />
+  </include>
+
+  <rosparam command="load" file="$(find test1)/config/test_controller.yaml" />
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen"
+    args="trajectory_controller"/>
+
+
+  <include file="$(find test1)/launch/planning_context.launch">
+  </include>
+
+  <include file="$(find panda_moveit_config)/launch/move_group.launch">
+      <arg name="planner" value="$(arg planner)" />
+      <arg name="allow_trajectory_execution" value="false"/>
+      <arg name="load_gripper" value="$(arg load_gripper)" />
+      <!-- <arg name="fake_execution" value="false"/> -->
+      <arg name="info" value="true"/>
+      <!-- <arg name="debug" value="$(arg debug)"/> -->
+  </include>
+
+  <include file="$(find panda_moveit_config)/launch/moveit_rviz.launch">
+  </include>
+</launch>

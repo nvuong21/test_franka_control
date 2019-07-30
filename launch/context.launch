@@ -1,0 +1,33 @@
+<launch>
+
+  <arg name="planner" default="ompl" />
+
+  <include file="$(find panda_moveit_config)/launch/planning_context.launch">
+    <arg name="load_robot_description" value="true"/>
+  </include>
+
+  <!-- We do not have a robot connected, so publish fake joint states -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <!-- <param name="/use_gui" value="$(arg use_gui)"/> -->
+    <rosparam param="/source_list">[/move_group/fake_controller_joint_states]</rosparam>
+  </node>
+  <node name="joint_state_desired_publisher" pkg="topic_tools" type="relay" args="joint_states joint_states_desired" />
+
+  <!-- Given the published joint states, publish tf for the robot links -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" />
+
+  <!-- Run the main MoveIt executable without trajectory execution (we do not have controllers configured by default) -->
+  <include file="$(find panda_moveit_config)/launch/move_group.launch">
+    <arg name="planner" value="$(arg planner)" />
+    <arg name="allow_trajectory_execution" value="true"/>
+    <arg name="fake_execution" value="true"/>
+    <arg name="info" value="true"/>
+    <!-- <arg name="debug" value="$(arg debug)"/> -->
+  </include>
+
+  <!-- Run Rviz -->
+  <include file="$(find panda_moveit_config)/launch/moveit_rviz.launch">
+  </include>
+
+
+</launch>
