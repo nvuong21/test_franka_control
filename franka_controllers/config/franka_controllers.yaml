@@ -1,0 +1,82 @@
+joint_position_controller:
+    type: franka_controllers/PandaJointPositionController
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+
+    publish_rate: 30.0
+
+joint_controller_torque_input:
+    type: franka_controllers/PandaJointControllerTorqueInput
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+    kp: 0.1
+    ki: 0.0
+    kd: 0.0
+    publish_rate: 10.0
+
+hybrid_controller:
+    type: franka_controllers/PandaHybridController
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+    kp_f: 0.01
+    ki_f: 0.0
+    kd_v: 0.0
+
+    kp_c: 0.1
+    ki_c: 0.0
+    kd_c: 0.0
+
+test_controller:
+    type: franka_controllers/TestController
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+    publish_rate: 30.0
+
+impedance_force_controller:
+    type: franka_controllers/ImpedanceForceController
+    arm_id: panda
+    joint_names:
+        - panda_joint1
+        - panda_joint2
+        - panda_joint3
+        - panda_joint4
+        - panda_joint5
+        - panda_joint6
+        - panda_joint7
+
+    k_gains:
+        - 400.0
+        - 400.0
+        - 400.0
+        - 20.0
+        - 20.0
+        - 20.0
+
+    k_collision: 50.0
