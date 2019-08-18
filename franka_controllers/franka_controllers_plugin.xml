@@ -13,13 +13,6 @@
     </description>
   </class>
 
-  <class name="franka_controllers/HybridController" type="franka_controllers::PandaHybridController"
-    base_class_type="controller_interface::ControllerBase">
-    <description>
-      A controller that moves the robot down and slide on the surface
-    </description>
-  </class>
-
   <class name="franka_controllers/TestController" type="franka_controllers::TestController"
     base_class_type="controller_interface::ControllerBase">
     <description>
@@ -34,46 +27,32 @@
     </description>
   </class>
 
-  <!-- </class>
-  <class name="franka_example_controllers/JointPositionExampleController" type="franka_example_controllers::JointPositionExampleController" base_class_type="controller_interface::ControllerBase">
+  <class name="franka_controllers/PandaStateController" type="franka_controllers::PandaStateController"
+    base_class_type="controller_interface::ControllerBase">
     <description>
-      A controller that executes a short motion based on joint positions to demonstrate correct usage
+      For publishing robot state
     </description>
   </class>
-  <class name="franka_example_controllers/CartesianPoseExampleController" type="franka_example_controllers::CartesianPoseExampleController" base_class_type="controller_interface::ControllerBase">
+
+  <class name="franka_controllers/PandaJointVelocityController" type="franka_controllers::PandaJointVelocityController"
+    base_class_type="controller_interface::ControllerBase">
     <description>
-      A controller that executes a short motion based on cartesian poses to demonstrate correct usage
+      Control joint velocity with torque input
     </description>
   </class>
-  <class name="franka_example_controllers/CartesianVelocityExampleController" type="franka_example_controllers::CartesianVelocityExampleController" base_class_type="controller_interface::ControllerBase">
+
+  <class name="franka_controllers/PandaCartesianVelocityController" type="franka_controllers::PandaCartesianVelocityController"
+    base_class_type="controller_interface::ControllerBase">
     <description>
-      A controller that executes a short motion based on cartesian velocities to demonstrate correct usage
+      Control cartesian velocity with torque input
     </description>
   </class>
-  <class name="franka_example_controllers/ElbowExampleController" type="franka_example_controllers::ElbowExampleController" base_class_type="controller_interface::ControllerBase">
+
+  <class name="franka_controllers/PandaForceController" type="franka_controllers::PandaForceController"
+    base_class_type="controller_interface::ControllerBase">
     <description>
-      A controller that executes a short motion based on cartesian poses and elbow to demonstrate correct usage
+      Force controllers
     </description>
   </class>
-  <class name="franka_example_controllers/ModelExampleController" type="franka_example_controllers::ModelExampleController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      A controller that evaluates and prints the dynamic model of Franka
-    </description>
-  </class>
-  <class name="franka_example_controllers/JointImpedanceExampleController" type="franka_example_controllers::JointImpedanceExampleController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      A controller that tracks a cartesian path with a joint impedance controller that compensates coriolis torques. The torque commands are compared to measured torques in Console outputs.
-    </description>
-  </class>
-  <class name="franka_example_controllers/CartesianImpedanceExampleController" type="franka_example_controllers::CartesianImpedanceExampleController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      A controller that renders a spring damper system in cartesian space. Compliance parameters and the equilibrium pose can be modified online with dynamic reconfigure and an interactive marker respectively.
-    </description>
-  </class>
-  <class name="franka_example_controllers/ForceExampleController" type="franka_example_controllers::ForceExampleController" base_class_type="controller_interface::ControllerBase">
-    <description>
-      A PI controller that applies a force corresponding to a user-provided desired mass in the z axis. The desired mass value can be modified online with dynamic reconfigure.
-    </description>
-  </class> -->
 
 </library>

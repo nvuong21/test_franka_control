@@ -138,7 +138,7 @@ void ImpedanceForceController::starting(const ros::Time& ) {
   // initial_wrench
 
   wrench_ext_initial_ = Eigen::Map<Eigen::Matrix<double, 6, 1>>(initial_state.O_F_ext_hat_K.data());
-  std::cout << wrench_ext_initial_ << "\n";
+  // std::cout << wrench_ext_initial_ << "n";
 
 }
 

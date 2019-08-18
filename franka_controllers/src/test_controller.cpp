@@ -13,14 +13,16 @@
 
 namespace franka_controllers {
 
-bool TestController::init(hardware_interface::RobotHW* robot_hardware,
+bool TestController::init(hardware_interface::RobotHW* robot_hw,
                                           ros::NodeHandle& node_handle) {
-  position_joint_interface_ = robot_hardware->get<hardware_interface::PositionJointInterface>();
-  if (position_joint_interface_ == nullptr) {
-    ROS_ERROR(
-        "TestController: Error getting position joint interface from hardware!");
+
+  // Read parameters from config file
+  std::string arm_id;
+  if (!node_handle.getParam("arm_id", arm_id)) {
+    ROS_ERROR_STREAM("CartesianImpedanceExampleController: Could not read parameter arm_id");
     return false;
   }
+
   std::vector<std::string> joint_names;
   if (!node_handle.getParam("joint_names", joint_names)) {
     ROS_ERROR("TestController: Could not parse joint names");
@@ -30,86 +32,100 @@ bool TestController::init(hardware_interface::RobotHW* robot_hardware,
                      << joint_names.size() << " instead of 7 names!");
     return false;
   }
-  position_joint_handles_.resize(7);
+
+  if (!node_handle.getParam("kp", kp_)) {
+    // ROS_ERROR_STREAM("CartesianImpedanceExampleController: Could not read parameter arm_id");
+    return false;
+  }
+
+  if (!node_handle.getParam("kd", kd_)) {
+    // ROS_ERROR_STREAM("CartesianImpedanceExampleController: Could not read parameter arm_id");
+    return false;
+  }
+
+  double publish_rate(50.0);
+  if (!node_handle.getParam("publish_rate", publish_rate)) {
+    ROS_INFO_STREAM("TestController: publish_rate not found. Defaulting to "
+                    << publish_rate);
+  }
+  rate_trigger_ = franka_hw::TriggerRate(publish_rate);
+
+
+  // Cartesian pose interface
+  auto* cartesian_pose_interface = robot_hw->get<franka_hw::FrankaPoseCartesianInterface>();
+  if (cartesian_pose_interface == nullptr) {
+    ROS_ERROR_STREAM(
+        "TestController: Error getting cartesian pose interface from hardware");
+    return false;
+  }
+  try {
+    cartesian_pose_handle_ = std::make_unique<franka_hw::FrankaCartesianPoseHandle>(
+        cartesian_pose_interface->getHandle(arm_id + "_robot"));
+  } catch (hardware_interface::HardwareInterfaceException& ex) {
+    ROS_ERROR_STREAM(
+        "TestController: Exception getting cartesian pose handle from interface: "
+        << ex.what());
+    return false;
+  }
+
+  // get joint effort interface
+  auto* effort_joint_interface = robot_hw->get<hardware_interface::EffortJointInterface>();
+  if (effort_joint_interface == nullptr) {
+    ROS_ERROR_STREAM(
+        "JointImpedanceExampleController: Error getting effort joint interface from hardware");
+    return false;
+  }
   for (size_t i = 0; i < 7; ++i) {
     try {
-      position_joint_handles_[i] = position_joint_interface_->getHandle(joint_names[i]);
-    } catch (const hardware_interface::HardwareInterfaceException& e) {
+      joint_handles_.push_back(effort_joint_interface->getHandle(joint_names[i]));
+    } catch (const hardware_interface::HardwareInterfaceException& ex) {
       ROS_ERROR_STREAM(
-          "TestController: Exception getting joint handles: " << e.what());
+          "JointImpedanceExampleController: Exception getting joint handles: " << ex.what());
       return false;
     }
   }
 
 
-  std::string arm_id;
-  if (!node_handle.getParam("arm_id", arm_id)) {
-    ROS_ERROR_STREAM("CartesianImpedanceExampleController: Could not read parameter arm_id");
-    return false;
-  }
-
-
-  auto* model_interface = robot_hardware->get<franka_hw::FrankaModelInterface>();
+  // get model interface
+  auto* model_interface = robot_hw->get<franka_hw::FrankaModelInterface>();
   if (model_interface == nullptr) {
     ROS_ERROR_STREAM(
-        "TestController: Error getting model interface from hardware");
+        "JointImpedanceExampleController: Error getting model interface from hardware");
     return false;
   }
+
   try {
     model_handle_ = std::make_unique<franka_hw::FrankaModelHandle>(
         model_interface->getHandle(arm_id + "_model"));
   } catch (hardware_interface::HardwareInterfaceException& ex) {
     ROS_ERROR_STREAM(
-        "TestController: Exception getting model handle from interface: "
+        "JointImpedanceExampleController: Exception getting model handle from interface: "
         << ex.what());
     return false;
   }
 
-  auto* state_interface = robot_hardware->get<franka_hw::FrankaStateInterface>();
-  if (state_interface == nullptr) {
-    ROS_ERROR_STREAM(
-        "TestController: Error getting state interface from hardware");
-    return false;
-  }
-  try {
-    state_handle_ = std::make_unique<franka_hw::FrankaStateHandle>(
-        state_interface->getHandle(arm_id + "_robot"));
-  } catch (hardware_interface::HardwareInterfaceException& ex) {
-    ROS_ERROR_STREAM(
-        "TestController: Exception getting state handle from interface: "
-        << ex.what());
-    return false;
-  }
+  // Interactive marker
+  // position_d_.setZero();
+  // orientation_d_.coeffs() << 0.0, 0.0, 0.0, 1.0;
+  // position_d_target_.setZero();
+  // orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
 
-  double publish_rate(30.0);
-  if (!node_handle.getParam("publish_rate", publish_rate)) {
-    ROS_INFO_STREAM("JointImpedanceExampleController: publish_rate not found. Defaulting to "
-                    << publish_rate);
-  }
-  rate_trigger_ = franka_hw::TriggerRate(publish_rate);
-
-  std::array<double, 7> q_start{{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
-  for (size_t i = 0; i < q_start.size(); i++) {
-    if (std::abs(position_joint_handles_[i].getPosition() - q_start[i]) > 0.1) {
-      ROS_ERROR_STREAM(
-          "TestController: Robot is not in the expected starting position for "
-          "running this example. Run `roslaunch franka_controllers move_to_start.launch "
-          "robot_ip:=<robot-ip> load_gripper:=<has-attached-gripper>` first.");
-      return false;
-    }
-  }
-
+  sub_desire_pose_ = node_handle.subscribe(
+      "/desire_pose", 20, &TestController::desirePoseCallback, this,
+      ros::TransportHints().reliable().tcpNoDelay());
 
   // Realtime publisher
-  publisher_.init(node_handle, "test", 1);
+  // publisher_.init(node_handle, "read", 1);
 
   return true;
 }
 
 void TestController::starting(const ros::Time& /* time */) {
-  for (size_t i = 0; i < 7; ++i) {
-    initial_pose_[i] = position_joint_handles_[i].getPosition();
-  }
+  franka::RobotState initial_state = cartesian_pose_handle_->getRobotState();
+  // Eigen::Affine3d initial_transform(Eigen::Matrix4d::Map(initial_state.O_T_EE.data()));
+
+  // Current pose
+  desire_pose_ = initial_state.O_T_EE;
   elapsed_time_ = ros::Duration(0.0);
 }
 
@@ -117,40 +133,81 @@ void TestController::update(const ros::Time& /*time*/,
                                             const ros::Duration& period) {
   elapsed_time_ += period;
 
-  //
-  double delta_angle = M_PI / 16 * (1 - std::cos(M_PI / 5.0 * elapsed_time_.toSec())) * 0.2;
+  cartesian_pose_handle_->setCommand(desire_pose_);
+
+  franka::RobotState robot_state = cartesian_pose_handle_->getRobotState();
+  std::array<double, 7> coriolis = model_handle_->getCoriolis();
+  std::array<double, 7> gravity = model_handle_->getGravity();
+
+  Eigen::Matrix<double, 7, 1> tau_cmd;
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(  // NOLINT (readability-identifier-naming)
+      robot_state.tau_J_d.data());
+
+  // Calculate error and update rule
+  std::array<double, 7> error, d_error;
   for (size_t i = 0; i < 7; ++i) {
-    if (i == 4) {
-      position_joint_handles_[i].setCommand(initial_pose_[i] - delta_angle);
-    } else {
-      position_joint_handles_[i].setCommand(initial_pose_[i] + delta_angle);
-    }
+    error[i] = robot_state.q_d[i] - robot_state.q[i];
+    d_error[i] = robot_state.dq_d[i] - robot_state.dq[i];
+    tau_cmd(i, 0) = kp_ * error[i] + kd_ * d_error[i];
   }
 
+  tau_cmd = saturateTorqueRate(tau_cmd, tau_J_d);
+  for (size_t i = 0; i < 7; ++i)
+    joint_handles_[i].setCommand(tau_cmd(i,0));
 
-  franka::RobotState robot_state = state_handle_->getRobotState();
-  std::array<double, 7> gravity_array = model_handle_->getGravity();
-  std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
-  std::array<double, 7> tau_J = robot_state.tau_J;
+  //
+  // if (rate_trigger_() && publisher_.trylock()) {
+  //   publisher_.msg_.time = elapsed_time_.toSec();
+  //   double rms{0.0};
+  //   for (size_t i = 0; i < 7; ++i) {
+  //     rms += error[i] * error[i]
+  //     // publisher_.msg_.tau_J[i] = tau_j[i];
+  //     // publisher_.msg_.tau_J_d[i] = tau_J_d(i);
+  //     // publisher_.msg_.coriolis[i] = coriolis[i];
+  //     // publisher_.msg_.gravity[i] = gravity[i];
+  //   }
+  //   publisher_.msg_.x = std::sqrt(rms)
+  //   publisher_.unlockAndPublish();
 
-  if (rate_trigger_() && publisher_.trylock()) {
-    publisher_.msg_.time = elapsed_time_.toSec();
-    for (size_t i = 0; i < 7; ++i) {
-      // publisher_.msg_.data1[i] = gravity_array[i];
-      // publisher_.msg_.data2[i] = coriolis_array[i];
-      // publisher_.msg_.data3[i] = tau_J[i];
-      publisher_.msg_.data1[i] = robot_state.dq_d[i];
-      publisher_.msg_.data2[i] = robot_state.ddq_d[i];
-      // publisher_.msg_.data3[i] = robot_state.ddq[i];
-    }
-
-    publisher_.unlockAndPublish();
-  }
+  // }
 
   // position_joint_handles_[0].setCommand(initial_pose_[0] + 0.1);
 }
 
+void TestController::desirePoseCallback(const geometry_msgs::PoseStampedConstPtr& msg){
+  Eigen::Quaterniond orientation;
+  orientation.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
+    msg->pose.orientation.z, msg->pose.orientation.w;
+
+  Eigen::Matrix3d rot = orientation.toRotationMatrix();
+  desire_pose_[12] = msg->pose.position.x;
+  desire_pose_[13] = msg->pose.position.y;
+  desire_pose_[14] = msg->pose.position.z;
+  desire_pose_[15] = 1.0;
+  for (size_t i = 0; i < 3; ++i) {
+    desire_pose_[4*i] = rot(0, i);
+    desire_pose_[4*i + 1] = rot(1, i);
+    desire_pose_[4*i + 2] = rot(2, i);
+    desire_pose_[4*i + 3] = 0.0;
+  }
+}
+
+Eigen::Matrix<double, 7, 1> TestController::saturateTorqueRate(
+    const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
+    const Eigen::Matrix<double, 7, 1>& tau_J_d) {  // NOLINT (readability-identifier-naming)
+  Eigen::Matrix<double, 7, 1> tau_d_saturated{};
+  for (size_t i = 0; i < 7; i++) {
+    double difference = tau_d_calculated[i] - tau_J_d[i];
+    tau_d_saturated[i] =
+        tau_J_d[i] + std::max(std::min(difference, delta_tau_max_), -delta_tau_max_);
+  }
+  return tau_d_saturated;
+}
+
 }  // namespace franka_controllers
+
+
+
 
 PLUGINLIB_EXPORT_CLASS(franka_controllers::TestController,
                        controller_interface::ControllerBase)

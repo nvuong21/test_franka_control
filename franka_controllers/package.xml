@@ -14,7 +14,7 @@
   <build_export_depend>message_runtime</build_export_depend>
 
   <depend>controller_interface</depend>
-  <!-- <depend>dynamic_reconfigure</depend> -->
+  <depend>dynamic_reconfigure</depend>
   <depend>franka_hw</depend>
   <depend>geometry_msgs</depend>
   <depend>hardware_interface</depend>

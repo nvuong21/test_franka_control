@@ -56,7 +56,7 @@ bool PandaJointPositionController::init(hardware_interface::RobotHW* robot_hardw
   // std::array<double, 7> q_start{{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
 
   // Realtime Publisher
-  joint_publisher_.init(node_handle, "joint_error", 1);
+  // joint_publisher_.init(node_handle, "joint_error", 1);
 
 
   return true;
@@ -94,6 +94,7 @@ void PandaJointPositionController::update(const ros::Time& /*time*/,
   }
 
 
+
   // Realtime publisher
   // if (rate_trigger_() && joint_publisher_.trylock()) {
   //   joint_error_ = 0.0;
@@ -104,7 +105,6 @@ void PandaJointPositionController::update(const ros::Time& /*time*/,
   //   joint_publisher_.unlockAndPublish();
   // }
 
-  ros::spinOnce();
 }
 
 
