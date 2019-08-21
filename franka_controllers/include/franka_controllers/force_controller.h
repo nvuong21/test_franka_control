@@ -1,4 +1,3 @@
-//// Test with/without realtime publisher
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,17 +25,26 @@ class PandaForceController : public controller_interface::MultiInterfaceControll
                                       franka_hw::FrankaStateInterface,
                                       franka_hw::FrankaModelInterface,
                                       hardware_interface::EffortJointInterface> {
+
   public:
+    // Controller Implementation
     bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle& node_handle) override;
     void starting(const ros::Time&) override;
     void update(const ros::Time&, const ros::Duration& period) override;
 
   private:
+    // Handle to communicate (read, write) with the interfaces
     std::unique_ptr<franka_hw::FrankaStateHandle> state_handle_;
     std::unique_ptr<franka_hw::FrankaModelHandle> model_handle_;
     std::vector<hardware_interface::JointHandle> joint_handles_;
 
-    // Limit torque function
+    // Limit torque (the difference from 2 continuous torque < delta_tau_max_)
+    //
+    // Input: tau_d_calculated - the torque calculated from the control formula
+    //                 tau_J_d - previous command torque
+    //
+    // Output: the limited tau_d_calculated
+    // (the same as before if difference < delta_tau_max_) 
     Eigen::Matrix<double, 7, 1> saturateTorqueRate(
         const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
         const Eigen::Matrix<double, 7, 1>& tau_J_d);

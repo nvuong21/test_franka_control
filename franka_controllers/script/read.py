@@ -1,10 +1,15 @@
 import pickle
 from franka_controllers.msg import RobotState, Float64Array
+from franka_msgs.msg import FrankaState
 import numpy as np
 import matplotlib.pyplot as plt
 
+# with open("/home/nvuong/data.txt", 'rb') as f:
+#     a = pickle.load(f)
+
 with open("/home/nvuong/data.txt", 'rb') as f:
     a = pickle.load(f)
+
 
 # Robot State
 # data = a['msg']
@@ -39,44 +44,44 @@ with open("/home/nvuong/data.txt", 'rb') as f:
 # print np.min(jnt_error[len(error) - 1, :])
 
 # Joint velocity
-data = a['msg']
-time = []
-v = np.zeros((len(data),7))
-v_cmd = np.zeros((len(data),7))
-q = np.zeros((len(data),7))
-q_cmd = np.zeros((len(data),7))
-
-q_error = 0
-v_error = 0
-
-for i in range(len(data)):
-    q[i, :] = np.array(data[i].data1)
-    q_cmd[i, :] = np.array(data[i].data2)
-    q_error = q_error + (q_cmd[i, 3] - q[i, 3])**2
-
-    v[i, :] = np.array(data[i].data3)
-    v_cmd[i, :] = np.array(data[i].data4)
-    v_error = v_error + (v_cmd[i, 3] - v[i, 3])**2
-    time.append(data[i].time)
-
-q_error = q_error / 7
-v_error = v_error / 7
-
-print np.sqrt(q_error)
-print np.sqrt(v_error)
-
-plt.figure()
-plt.subplot(121)
-plt.plot(time, v[:, 3])
-plt.plot(time, v_cmd[:, 3])
-plt.legend(['v', 'v_cmd'])
-
-plt.subplot(122)
-plt.plot(time, q[:, 3])
-plt.plot(time, q_cmd[:, 3])
-plt.legend(['q', 'q_cmd'])
-
-plt.show()
+# data = a['msg']
+# time = []
+# v = np.zeros((len(data),7))
+# v_cmd = np.zeros((len(data),7))
+# q = np.zeros((len(data),7))
+# q_cmd = np.zeros((len(data),7))
+#
+# q_error = 0
+# v_error = 0
+#
+# for i in range(len(data)):
+#     q[i, :] = np.array(data[i].data1)
+#     q_cmd[i, :] = np.array(data[i].data2)
+#     q_error = q_error + (q_cmd[i, 3] - q[i, 3])**2
+#
+#     v[i, :] = np.array(data[i].data3)
+#     v_cmd[i, :] = np.array(data[i].data4)
+#     v_error = v_error + (v_cmd[i, 3] - v[i, 3])**2
+#     time.append(data[i].time)
+#
+# q_error = q_error / 7
+# v_error = v_error / 7
+#
+# print np.sqrt(q_error)
+# print np.sqrt(v_error)
+#
+# plt.figure()
+# plt.subplot(121)
+# plt.plot(time, v[:, 3])
+# plt.plot(time, v_cmd[:, 3])
+# plt.legend(['v', 'v_cmd'])
+#
+# plt.subplot(122)
+# plt.plot(time, q[:, 3])
+# plt.plot(time, q_cmd[:, 3])
+# plt.legend(['q', 'q_cmd'])
+#
+# plt.show()
 
 
 #JointImpedanceExampleController
@@ -107,11 +112,25 @@ plt.show()
 # Force example controller
 data = a['msg']
 l = len(data)
-ext_wrench = np.zeros((l,6))
+ext_wrench = np.zeros((l,1))
+des_wrench = np.zeros((l,1))
+time = np.zeros((l,1))
+
 
 for i in range(l):
-    ext_wrench[i, :] = np.array(data[i].data1)
-
+    ext_wrench[i, 0] = data[i].const2
+    des_wrench[i, 0] = data[i].const1
+    time[i, 0] = data[i].time
 k = np.linspace(1, l, l)
-plt.plot(k, ext_wrench)
+plt.plot(time[280:600], ext_wrench[280:600])
+# plt.plot(time, des_wrench)
+plt.legend(['ext', 'des'])
 plt.show()
+
+
+# Franka_state
+# data = a['msg']
+# l = len(data)
+# k = np.linspace(1, l, l)
+# plt.plot(k, data)
+# plt.show()

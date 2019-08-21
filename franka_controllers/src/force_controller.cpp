@@ -88,10 +88,10 @@ bool PandaForceController::init(hardware_interface::RobotHW* robot_hw,
   dynamic_server_force_controller_param_->setCallback(
     boost::bind(&PandaForceController::ForceControllerParamCallback, this, _1, _2));
 
-  return true;
-
-  // Realtime publisher
+    // Realtime publisher
   publisher_.init(node_handle, "data", 1);
+
+  return true;
 }
 
 void PandaForceController::starting(const ros::Time& ) {
@@ -101,11 +101,11 @@ void PandaForceController::starting(const ros::Time& ) {
   // Initialize force error sum
   force_error_int_.setZero();
   elapsed_time_ = 0.0;
-  desired_force_ = 0.0;
 }
 
 void PandaForceController::update(const ros::Time& , const ros::Duration& period) {
   elapsed_time_ += period.toSec();
+
   // Get current robot state
   franka::RobotState robot_state = state_handle_->getRobotState();
 
@@ -113,7 +113,7 @@ void PandaForceController::update(const ros::Time& , const ros::Duration& period
   Eigen::Map<Eigen::Matrix<double, 6, 1>> force_ext(robot_state.O_F_ext_hat_K.data());
 
   // Current torque signal
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J(robot_state.tau_J.data());
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data());
 
   // Jacobian matrix
   std::array<double, 42> jacobian_array =
@@ -131,21 +131,26 @@ void PandaForceController::update(const ros::Time& , const ros::Duration& period
                         + k_p_ * (desired_force_torque - force_ext + force_ext_initial_));
   force_control << 0, 0, force_control(2), 0, 0, 0;
   tau_force << jacobian.transpose() * force_control;
-  tau_force << saturateTorqueRate(tau_force, tau_J);
 
+  // Limit torque
+  tau_force << saturateTorqueRate(tau_force, tau_J_d);
   for (size_t i = 0; i < 7; ++i)
     joint_handles_[i].setCommand(tau_force(i));
 
   // Update dynamic params
   updateDynamicReconfigure();
 
+
   // Realtime publisher
   if (rate_trigger_() && publisher_.trylock()) {
     publisher_.msg_.time = elapsed_time_;
     publisher_.msg_.x = force_ext(2) - force_ext_initial_(2);
+    publisher_.msg_.z = ros::Time::now().toSec();
+    publisher_.msg_.y = desired_force_torque(2);
+
     publisher_.unlockAndPublish();
   }
-
+  force_ext_initial_(2) = 0.99 *force_ext_initial_(2);
 }
 
 // Limit torque input
@@ -164,6 +169,7 @@ Eigen::Matrix<double, 7, 1> PandaForceController::saturateTorqueRate(
 // Update dynamic params
 void PandaForceController::updateDynamicReconfigure() {
   // Gradually increase
+  filter_params_ = 1;
   desired_force_ = filter_params_ * target_force_ + (1 - filter_params_) * desired_force_;
   k_p_ = filter_params_ * target_k_p_ + (1 - filter_params_) * k_p_;
   k_i_ = filter_params_ * target_k_i_ + (1 - filter_params_) * k_i_;
@@ -179,6 +185,6 @@ void PandaForceController::ForceControllerParamCallback(
 }
 } // end namespace
 
-
+// Register the controller to the controller_manager
 PLUGINLIB_EXPORT_CLASS(franka_controllers::PandaForceController,
                        controller_interface::ControllerBase)

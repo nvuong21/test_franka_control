@@ -7,11 +7,17 @@
     <arg name="load_gripper" value="$(arg load_gripper)" />
   </include>
 
-  <node name = "netft_node" pkg = "netft_control" type = "netft_node"
-    output = "screen" args="--address 192.168.1.1">
-    <!-- <param name="address" value="192.168.1.1" />
-    <param name="rate" value="100" /> -->
-  </node>
+<!-- Launch netft_driver -->
+  <include file="$(find netft_control)/launch/netft_ros_driver.launch">
+    <arg name="rate" value="100" />
+  </include>
+
+  <rosparam>
+    ft_sensor_controller:
+      type: force_torque_sensor_controller/ForceTorqueSensorController
+  </rosparam>
+  <!-- load controller -->
+  <node name="robot_controllers" pkg="controller_manager" type="spawner" output="$(arg OUTPUT)" args="ft_sensor_controller"/>
 
   <rosparam command="load" file="$(find franka_controllers)/config/franka_controllers.yaml" />
   <node name="controller_spawner" pkg="controller_manager" type="spawner"
