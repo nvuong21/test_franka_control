@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="ati_gamma" params="prefix parent feedback_joint">
+    <!-- Gamma FT sensor -->
+    <!-- The height (Z) of the denso-gamma coupler is 10mm -->
+    <!-- The Z of the sensor is 28.6mm but the reference frame is at 14mm -->
+    <!-- That's why we first translate the FT sensor 24mm -->
+    <link name="${prefix}ft_sensor">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 ${pi/6}" />
+        <geometry>
+          <mesh filename="package://netft_description/meshes/ati_gamma.stl"/>
+        </geometry>
+        <material name="aluminium">
+          <color rgba="0.678 0.698 0.741 1.0" />
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 ${pi/6}" />
+        <geometry>
+          <mesh filename="package://netft_description/meshes/ati_gamma.stl"/>
+        </geometry>
+      </collision>
+      <inertial>
+        <origin xyz="9.396e-4  0.017  -7.545e-4" rpy="0 0 0" />
+        <mass value="0.215" />
+        <inertia  ixx="1.055e-4"  ixy="-7.262e-7" ixz="6.186e-6"
+                                  iyy="1.7e-4"    iyz="6.529e-7"
+                                                  izz="1.076e-4" />
+      </inertial>
+    </link>
+    <joint name="${prefix}ft_sensor_joint" type="fixed">
+       <origin xyz="0 0 0.024" rpy="${pi} 0 ${-pi/2}" />
+      <parent link="${parent}"/>
+      <child link="${prefix}ft_sensor"/>
+    </joint>
+    <!-- Gazebo -->
+    <gazebo reference="${prefix}ft_sensor">
+      <mu1>0.9</mu1>
+      <mu2>0.9</mu2>
+      <selfCollide>true</selfCollide>
+      <material>Gazebo/Grey</material>
+    </gazebo>
+    <gazebo reference="${feedback_joint}">
+      <provideFeedback>true</provideFeedback>
+    </gazebo>
+    <gazebo>
+      <plugin name="${prefix}ft_plugin" filename="libgazebo_ros_ft_sensor.so">
+        <updateRate>250.0</updateRate>
+        <topicName>${prefix}ft_sensor/raw</topicName>
+        <gaussianNoise>0.0</gaussianNoise>
+        <jointName>${feedback_joint}</jointName>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>

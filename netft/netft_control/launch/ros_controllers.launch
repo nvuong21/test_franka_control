@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- launch file parameters -->
+  <arg name="namespace" default="netft" />
+  <arg name="debug"     default="true" />
+
+  <arg if="$(arg debug)"      name="OUTPUT" value="screen"/>
+  <arg unless="$(arg debug)"  name="OUTPUT" value="log"/>
+
+  <include file="$(find netft_control)/launch/netft_ros_driver.launch">
+    <arg name="ip"   value="192.168.1.1" />
+    <arg name="rate" value="100" />
+  </include>
+
+  <group ns="$(arg namespace)">
+    <rosparam>
+      ft_sensor_controller:
+        type: force_torque_sensor_controller/ForceTorqueSensorController
+    </rosparam>
+    <!-- load controller -->
+    <node name="robot_controllers" pkg="controller_manager" type="spawner" output="$(arg OUTPUT)" args="ft_sensor_controller"/>
+  </group>
+</launch>

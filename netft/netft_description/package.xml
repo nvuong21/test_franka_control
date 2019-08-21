@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>netft_description</name>
+  <version>0.1.0</version>
+  <description>
+   <p>This package provides the robot description for ATI gamma sensors.</p>
+  </description>
+
+  <license>BSD</license>
+  <maintainer email="fsuarez6@gmail.com">Francisco Suarez Ruiz</maintainer>
+  <author email="fsuarez6@gmail.com">Francisco Suarez Ruiz</author>
+  <url type="website">https://github.com/fsuarez6/netft</url>
+  <url type="bugtracker">https://github.com/fsuarez6/netft/issues</url>
+  <url type="repository">https://github.com/fsuarez6/netft</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>rviz</exec_depend>
+
+</package>
