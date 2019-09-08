@@ -55,4 +55,11 @@
     </description>
   </class>
 
+  <class name="franka_controllers/HybridForceController" type="franka_controllers::HybridForceController"
+    base_class_type="controller_interface::ControllerBase">
+    <description>
+      Hybrid Force controllers
+    </description>
+  </class>
+
 </library>

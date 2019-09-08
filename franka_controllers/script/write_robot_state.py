@@ -55,7 +55,7 @@ rospy.init_node('subscriber')
 # force_example_controller
 # rospy.Subscriber("force_example_controller/data", Float64Array, callback)
 # rospy.Subscriber("force_controller/data", Float64Array, callback)
-rospy.Subscriber("plug_in_controller/data", Float64Array, callback)
+rospy.Subscriber("hybrid_force_controller/data", Float64Array, callback)
 
 
 # franka state

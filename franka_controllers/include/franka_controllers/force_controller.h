@@ -44,7 +44,7 @@ class PandaForceController : public controller_interface::MultiInterfaceControll
     //                 tau_J_d - previous command torque
     //
     // Output: the limited tau_d_calculated
-    // (the same as before if difference < delta_tau_max_) 
+    // (the same as before if difference < delta_tau_max_)
     Eigen::Matrix<double, 7, 1> saturateTorqueRate(
         const Eigen::Matrix<double, 7, 1>& tau_d_calculated,
         const Eigen::Matrix<double, 7, 1>& tau_J_d);
@@ -54,12 +54,14 @@ class PandaForceController : public controller_interface::MultiInterfaceControll
     double desired_force_{0.0};
     double k_p_{0.0};
     double k_i_{0.0};
+    double k_d_{0.0};
     Eigen::Matrix<double, 6, 1> force_ext_initial_; // Initial ext force offset
     Eigen::Matrix<double, 6, 1> force_error_int_;   // Sum of force error
 
     // DYnamic reconfigure
     double target_k_p_{0.0};
     double target_k_i_{0.0};
+    double target_k_d_{0.0};
     double target_force_{0.0};
     double filter_params_{0.005};
     void updateDynamicReconfigure();
