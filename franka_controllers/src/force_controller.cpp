@@ -105,6 +105,16 @@ void PandaForceController::starting(const ros::Time& ) {
 
 void PandaForceController::update(const ros::Time& , const ros::Duration& period) {
   elapsed_time_ += period.toSec();
+  double k_d{0};
+
+  // if (elapsed_time_ > 5)
+  // {
+  //   desired_force_ = 3.0;
+  //   k_p_ = 1.0;
+  //   k_i_ = 0.5;
+  //   k_d = 0.0;
+  // }
+
 
   // Get current robot state
   franka::RobotState robot_state = state_handle_->getRobotState();
@@ -114,6 +124,7 @@ void PandaForceController::update(const ros::Time& , const ros::Duration& period
 
   // Current torque signal
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data());
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
 
   // Jacobian matrix
   std::array<double, 42> jacobian_array =
@@ -125,17 +136,24 @@ void PandaForceController::update(const ros::Time& , const ros::Duration& period
   // FOrce control
   desired_force_torque.setZero();
   desired_force_torque(2) = -desired_force_;
-  force_error_int_ += period.toSec() * (desired_force_torque - force_ext + force_ext_initial_);
+  force_error_int_ += k_i_ * period.toSec() * (desired_force_torque - force_ext + force_ext_initial_);
   // PI controller
-  force_control = (desired_force_torque + k_i_ * force_error_int_
-                        + k_p_ * (desired_force_torque - force_ext + force_ext_initial_));
+  force_control = (desired_force_torque + force_error_int_
+                        + k_p_ * (desired_force_torque - force_ext + force_ext_initial_)
+                        - k_d_ * jacobian * dq);
+
   force_control << 0, 0, force_control(2), 0, 0, 0;
   tau_force << jacobian.transpose() * force_control;
 
   // Limit torque
   tau_force << saturateTorqueRate(tau_force, tau_J_d);
-  for (size_t i = 0; i < 7; ++i)
+  for (size_t i = 0; i < 7; ++i){
+    // if (i == 0)
+    //   std::cout;
+    // std::cout << tau_force(i) << std::endl;
     joint_handles_[i].setCommand(tau_force(i));
+
+  }
 
   // Update dynamic params
   updateDynamicReconfigure();
@@ -150,7 +168,7 @@ void PandaForceController::update(const ros::Time& , const ros::Duration& period
 
     publisher_.unlockAndPublish();
   }
-  force_ext_initial_(2) = 0.99 *force_ext_initial_(2);
+  // force_ext_initial_(2) = 0.99 *force_ext_initial_(2);
 }
 
 // Limit torque input
@@ -169,10 +187,10 @@ Eigen::Matrix<double, 7, 1> PandaForceController::saturateTorqueRate(
 // Update dynamic params
 void PandaForceController::updateDynamicReconfigure() {
   // Gradually increase
-  filter_params_ = 1;
+
   desired_force_ = filter_params_ * target_force_ + (1 - filter_params_) * desired_force_;
-  k_p_ = filter_params_ * target_k_p_ + (1 - filter_params_) * k_p_;
-  k_i_ = filter_params_ * target_k_i_ + (1 - filter_params_) * k_i_;
+  // k_p_ = filter_params_ * target_k_p_ + (1 - filter_params_) * k_p_;
+  // k_i_ = filter_params_ * target_k_i_ + (1 - filter_params_) * k_i_;
 }
 
 // Get Dynamic params
@@ -180,8 +198,9 @@ void PandaForceController::ForceControllerParamCallback(
   franka_controllers::force_controller_paramConfig& config,
   uint32_t /*level*/) {
     target_force_ = config.desired_force;
-    target_k_p_ = config.k_p;
-    target_k_i_ = config.k_i;
+    k_p_ = config.k_p;
+    k_i_ = config.k_i;
+    k_d_ = config.k_d;
 }
 } // end namespace
 

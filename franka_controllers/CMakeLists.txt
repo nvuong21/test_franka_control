@@ -36,6 +36,8 @@ generate_messages(
 
 generate_dynamic_reconfigure_options(
   cfg/force_controller_params.cfg
+  cfg/impedance_param.cfg
+  cfg/hybrid_param.cfg
 )
 
 catkin_package(
@@ -65,6 +67,7 @@ add_library(franka_controllers
   src/joint_velocity_controller.cpp
   src/cartesian_velocity_controller.cpp
   src/force_controller.cpp
+  src/hybrid_force_controller.cpp
 )
 
 add_dependencies(franka_controllers

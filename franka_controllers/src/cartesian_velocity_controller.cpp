@@ -35,13 +35,13 @@ bool PandaCartesianVelocityController::init(hardware_interface::RobotHW* robot_h
   // Realtime Publisher
   publisher_.init(node_handle, "data", 1);
 
-  // Generate trajectory
-  trajectory_ = generateTrajectory();
-  index_ = 0;
+
 }
 
 void PandaCartesianVelocityController::starting(const ros::Time&) {
-
+  // Generate trajectory
+  trajectory_ = generateTrajectory();
+  index_ = 0;
 }
 
 void PandaCartesianVelocityController::update(const ros::Time&, const ros::Duration& period) {
@@ -73,8 +73,10 @@ void PandaCartesianVelocityController::update(const ros::Time&, const ros::Durat
   tau_cmd = saturateTorqueRate(tau_cmd, tau_J_d);
 
   //Send command
-  for (size_t i = 0; i < 7; ++i)
-    joint_handles_[i].setCommand(tau_cmd(i));
+  // for (size_t i = 0; i < 7; ++i)
+  //   joint_handles_[i].setCommand(tau_cmd(i));
+
+  std::cout<<tau_cmd<<std::endl;
 
   // Realtime Publisher
   elapsed_time_ += period;
@@ -104,27 +106,55 @@ void PandaCartesianVelocityController::update(const ros::Time&, const ros::Durat
   }
 }
 
+// std::vector<std::array<double, 6>> PandaCartesianVelocityController::generateTrajectory() {
+//   std::vector<std::array<double, 6>> trajectory;
+//
+//   double kTimeStep = 0.001;
+//   double time_max = 10.0;
+//   // double v_max = 0.2;
+//   double freq = 2.0;
+//   double radius = 0.1;
+//
+//   std::array<double, 6> v = {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}};
+//   double t = 0.0;
+//   double angle = 0.0;
+//   double v_y, v_z;
+//
+//
+//   while (t <= time_max) {
+//     angle = 2.0 * M_PI / freq * t;
+//     v_y = radius * std::cos(angle) * 2.0 * M_PI / freq;
+//     v_z = -radius * std::sin(angle) * 2.0 * M_PI / freq;
+//     v[1] = v_y;
+//     v[2] = v_z;
+//     trajectory.push_back(v);
+//     t += kTimeStep;
+//   }
+//
+//   return trajectory;
+// }
+
 std::vector<std::array<double, 6>> PandaCartesianVelocityController::generateTrajectory() {
   std::vector<std::array<double, 6>> trajectory;
 
   double kTimeStep = 0.001;
-  double time_max = 10.0;
+  double time_max = 5.0;
   // double v_max = 0.2;
-  double freq = 2.0;
-  double radius = 0.1;
+  double freq = 10.0;
+  double amplitude = 0.02;
 
   std::array<double, 6> v = {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0}};
   double t = 0.0;
   double angle = 0.0;
-  double v_y, v_z;
+  double v_y;
 
 
   while (t <= time_max) {
     angle = 2.0 * M_PI / freq * t;
-    v_y = radius * std::cos(angle) * 2.0 * M_PI / freq;
-    v_z = -radius * std::sin(angle) * 2.0 * M_PI / freq;
+    v_y = amplitude * std::cos(angle) * 2.0 * M_PI / freq;
+    // v_z = -radius * std::sin(angle) * 2.0 * M_PI / freq;
     v[1] = v_y;
-    v[2] = v_z;
+    // v[2] = v_z;
     trajectory.push_back(v);
     t += kTimeStep;
   }

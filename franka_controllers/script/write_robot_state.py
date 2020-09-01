@@ -23,7 +23,7 @@ def callback(data):
     # msg.append(data)
     # msg.append([data.time, data.x, data.y, data.z]
     # print msg
-    msg.append([data.time, data.x, data.y, data.z, data.data1[0], data.data1[1]])
+    msg.append([data.time, data.x, data.y, data.z, data.data1, data.data2, data.data3])
 
     count = count + 1
     if count % 100 == 0:
@@ -55,7 +55,7 @@ rospy.init_node('subscriber')
 # force_example_controller
 # rospy.Subscriber("force_example_controller/data", Float64Array, callback)
 # rospy.Subscriber("force_controller/data", Float64Array, callback)
-rospy.Subscriber("plug_in_controller/data", Float64Array, callback)
+rospy.Subscriber("hybrid_force_controller/data", Float64Array, callback)
 
 
 # franka state

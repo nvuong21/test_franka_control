@@ -7,7 +7,11 @@
     <arg name="load_gripper" value="$(arg load_gripper)" />
   </include>
 
+  <node name = "netft_node" pkg = "netft_control" type = "netft_node"
+    args = "--address 192.168.1.1 --rate 100" output = "screen">
+  </node>
+
   <rosparam command="load" file="$(find franka_controllers)/config/franka_controllers.yaml" />
-  <node name="controller_spawner" pkg="controller_manager" type="spawner"
-     respawn="false" output="screen"  args="cartesian_velocity_controller"/>
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="hybrid_force_controller"/>
+  <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" required="false" />
 </launch>
